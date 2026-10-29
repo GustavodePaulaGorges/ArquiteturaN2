@@ -1,0 +1,13 @@
+@startuml
+!include <C4/C4_Context>
+
+title C1 - Contexto do Sistema Quiz Master
+
+Person(user, "Usuário", "Cria quizzes, responde perguntas e interage com outros usuários.")
+
+System(quizmaster, "Quiz Master", "Plataforma web para criação, consulta e interação social em quizzes.")
+
+Rel(user, quizmaster, "Utiliza pelo navegador", "HTTPS")
+
+SHOW_LEGEND()
+@enduml

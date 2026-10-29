@@ -1,0 +1,26 @@
+@startuml
+!include <C4/C4_Container>
+
+title C2 - Contêineres do Quiz Master com Mensageria
+
+Person(user, "Usuário", "Utiliza a plataforma pelo navegador.")
+
+System_Boundary(quizmaster, "Sistema Quiz Master") {
+    Container(spa, "Web SPA", "Vue 3, Pinia, Vue Router, Axios", "Interface web executada no navegador.")
+    Container(api, "Quiz Master API", "Node.js, Express", "API REST que coordena os casos de uso.")
+    ContainerDb(db, "MySQL", "MySQL / Sequelize", "Usuários, quizzes, respostas, curtidas, comentários, eventos Outbox e notificações.")
+    Container(publisher, "Outbox Publisher", "Processo Node.js - proposto", "Lê eventos pendentes na Outbox e publica eventos após o commit.")
+    ContainerQueue(broker, "RabbitMQ", "AMQP - proposto", "Roteia eventos por exchange e filas duráveis; recomenda-se retry e dead-letter queue.")
+    Container(worker, "Worker de Atividades", "Processo Node.js - proposto", "Consome eventos e grava notificações de curtidas e comentários.")
+}
+
+Rel(user, spa, "Utiliza", "HTTPS")
+Rel(spa, api, "Consome a API REST", "HTTPS / JSON; JWT quando autenticado")
+Rel(api, db, "Persiste dados e evento Outbox na mesma transação", "SQL / Sequelize")
+Rel(publisher, db, "Consulta eventos pendentes", "SQL")
+Rel(publisher, broker, "Publica eventos", "AMQP")
+Rel(broker, worker, "Entrega eventos pela fila activity.notifications", "AMQP")
+Rel(worker, db, "Persiste notificações e controla idempotência por eventId", "SQL")
+
+SHOW_LEGEND()
+@enduml

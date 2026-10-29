@@ -1,0 +1,38 @@
+@startuml
+!include <C4/C4_Component>
+
+title C3 - Componentes da Quiz Master API (arquitetura-alvo DDD)
+
+Container(spa, "Web SPA", "Vue 3", "Cliente web que consome a API por HTTPS/JSON.")
+ContainerDb(db, "MySQL", "MySQL / Sequelize", "Dados de negócio, eventos Outbox e notificações.")
+Container(files, "Armazenamento de arquivos", "Filesystem", "Imagens de quizzes e perfis.")
+
+Container_Boundary(api, "Quiz Master API - arquitetura proposta") {
+    Component(routes, "Rotas HTTP", "Express Router", "Mapeia endpoints para controllers.")
+    Component(controllers, "Controllers", "Express", "Interpreta requisições, valida entradas HTTP e monta respostas.")
+    Component(application, "Casos de uso", "Camada de aplicação", "Coordena registro, quizzes, descoberta, curtidas e comentários.")
+    Component(domain, "Modelo de domínio", "Entidades, objetos de valor e políticas", "Representa regras de identidade/perfil, quizzes e interação social.")
+    Component(repoPorts, "Portas de repositório", "Contratos", "Define as operações de persistência usadas pelos casos de uso.")
+    Component(outboxPort, "Porta de eventos", "OutboxWriter", "Define o contrato para registrar eventos na mesma transação do negócio.")
+    Component(imagePort, "Porta de imagens", "ImageStorage", "Define o contrato para salvar e remover imagens.")
+    Component(repoAdapter, "Adaptadores de repositório", "Sequelize", "Implementa os contratos de persistência em MySQL.")
+    Component(outboxAdapter, "Adaptador Outbox", "Sequelize / MySQL", "Grava eventos na tabela outbox_events usando a transação de negócio.")
+    Component(imageAdapter, "Adaptador de imagens", "Filesystem", "Implementa a porta de imagens usando arquivos locais.")
+}
+
+Rel(spa, routes, "Envia requisições", "HTTPS / JSON")
+Rel(routes, controllers, "Encaminha requisições")
+Rel(controllers, application, "Invoca casos de uso")
+Rel(application, domain, "Aplica regras de negócio")
+Rel(application, repoPorts, "Usa contratos")
+Rel(repoAdapter, repoPorts, "Implementa")
+Rel(repoAdapter, db, "Consulta e persiste dados", "SQL")
+Rel(application, outboxPort, "Solicita registro do evento")
+Rel(outboxAdapter, outboxPort, "Implementa")
+Rel(outboxAdapter, db, "Grava evento na transação", "SQL")
+Rel(application, imagePort, "Usa contrato de imagens")
+Rel(imageAdapter, imagePort, "Implementa")
+Rel(imageAdapter, files, "Lê e grava arquivos")
+
+SHOW_LEGEND()
+@enduml
